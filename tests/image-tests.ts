@@ -40,7 +40,7 @@ describe("image integration test", function () {
         
         const result = await sut.upsert(imageData);
         
-        expect(removeMongoMembers(result)).to.eql(imageData);
+        expect(result).to.eql(imageData);
     });
 
     it("should update if already exists", async () => {
@@ -50,7 +50,7 @@ describe("image integration test", function () {
         imageData.name = "newName";
         const updatedResult = await sut.upsert(imageData);
 
-        expect(removeMongoMembers(updatedResult)).to.eql(imageData);
+        expect(updatedResult).to.eql(imageData);
     });
 
     it("should merge metadata", async () => {
@@ -62,7 +62,15 @@ describe("image integration test", function () {
         imageData.metadata = {b:3, c:4};
         const updatedResult = await sut.upsert(imageData);
 
-        expect(removeMongoMembers(updatedResult)["metadata"]).to.eql({a:1, b:3, c:4});
+        expect(updatedResult.metadata).to.eql({a:1, b:3, c:4});
+    });
+
+    it("should get image by id",async () => {
+        const imageData = dummyImage();
+        await sut.upsert(imageData);
+
+        const result = await sut.getById(imageData.id);
+        expect(result).to.eql(imageData);
     });
 
     function dummyImage() : Image {
@@ -72,13 +80,5 @@ describe("image integration test", function () {
             repository: "dummy repo",
             version: "dummy version"
         };
-    }    
-
-    function removeMongoMembers(mongoObject: any) : object {
-        const obj = mongoObject.toObject();
-        delete obj["__v"];
-        delete obj["_id"];
-        return obj;
-    }
-    
+    }        
 });
