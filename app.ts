@@ -1,6 +1,6 @@
 require("dotenv").config();
 require("./config/database").connect();
-import express from "express";
+import express, { response } from "express";
 
 export const app = express();
 
@@ -12,9 +12,25 @@ import "./authentication/login";
 
 import {verifyToken} from "./authentication/auth";
 
-app.post("/welcome", verifyToken, (req, res) => {
-    res.status(200).send(`Welcome!`);
+import { Get, Route } from "tsoa";
+interface WelcomeResponse {
+    message: string
+};
+
+//#region Welcome - example entry point
+@Route("welcome")
+class WelcomeController
+{
+    @Get("/")
+    public async welcome() : Promise<WelcomeResponse> {
+        return {message: "Welcome!"}
+    }
+}
+
+app.get("/welcome", verifyToken, async (req, res) => {
+    return res.send(await new WelcomeController().welcome());
 });
+//#endregion
 
 import swaggerUi from "swagger-ui-express";
 app.use(express.json());
