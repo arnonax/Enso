@@ -1,5 +1,5 @@
 require("dotenv").config();
-require("./config/database").connect();
+require("./config/database").connect(process.env.MONGO_URI);
 import express, { response } from "express";
 
 export const app = express();
@@ -12,12 +12,15 @@ import "./authentication/login";
 
 import {verifyToken} from "./authentication/auth";
 
+import "./image/imageController";
+
+//#region Welcome - example entry point
 import { Get, Route } from "tsoa";
+
 interface WelcomeResponse {
     message: string
 };
 
-//#region Welcome - example entry point
 @Route("welcome")
 class WelcomeController
 {

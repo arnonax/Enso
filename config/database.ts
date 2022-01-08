@@ -1,11 +1,9 @@
 import mongoose from "mongoose";
 
-const { MONGO_URI } = process.env;
-
-export const connect = async () => {
+export const connect = async (mongoUri: string) => {
     // Connecting to the database
     try {
-        await mongoose.connect(MONGO_URI!, {
+        await mongoose.connect(mongoUri!, {
             //useNewUrlParser: true,
             //useUnifiedTopology: true,
             //userCreateIndex: true,
