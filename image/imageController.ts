@@ -7,8 +7,10 @@ import { verifyToken } from "../authentication/auth";
 export class ImageContoller {
     @Get()
     public async getById(id: string) : Promise<Image> {
-        throw new Error("Method not implemented.");
+        const result = await imageModel.findOne({id});
+        return ImageContoller.removeMongoMembers(result);
     }
+
     @Put()
     public async upsert(image: Image) : Promise<Image> {
         const creteria = { id: image.id };
@@ -19,10 +21,10 @@ export class ImageContoller {
         }
 
         const result = await imageModel.findOneAndUpdate(creteria, body, {new: true, upsert: true});
-        return this.removeMongoMembers(result);
+        return ImageContoller.removeMongoMembers(result);
     }
 
-    private removeMongoMembers(mongoObject: any) : Image {
+    private static removeMongoMembers(mongoObject: any) : Image {
         const obj = mongoObject.toObject();
         delete obj["__v"];
         delete obj["_id"];
