@@ -74,3 +74,9 @@ app.post("/login", async (req, res) => {
         console.log(err);
     }
 });
+
+import {verifyToken} from "./middleware/auth";
+
+app.post("/welcome", verifyToken, (req, res) => {
+    res.status(200).send(`Welcome!`);
+});
