@@ -5,10 +5,18 @@ import { verifyToken } from "../authentication/auth";
 
 @Route("image")
 export class ImageContoller {
+    
     @Get()
     public async getById(id: string) : Promise<Image> {
         const result = await imageModel.findOne({id});
         return ImageContoller.removeMongoMembers(result);
+    }
+
+    @Get()
+    public async get(offset : number, limit : number) : Promise<Image[]> {
+        const queryOptions = { skip: offset, limit };
+        const results = await imageModel.find(null, null, queryOptions);
+        return results.map(result => ImageContoller.removeMongoMembers(result));
     }
 
     @Put()
@@ -50,11 +58,40 @@ app.put("/image", verifyToken, async (req, res) => {
     }
 });
 
-app.get("/image/:id", async (req, res) => {
+app.get("/image/:id", verifyToken, async (req, res) => {
     const id = req.params.id;
     const result = await new ImageContoller().getById(id);
     if (!result) {
         return res.status(404).send(`Image with id ${id} not found`);
     }
+    return res.status(200).json(result);
+});
+
+app.get("/image", verifyToken, async (req, res) => {
+    // TODO: extract the validation logic into a separate class
+    let offset : number;
+    if (!req.query.offset)
+        offset = 0;
+    else
+    {
+        offset = parseInt(<string>req.query.offset);
+        if (isNaN(offset) || offset < 0)
+            return res.status(400).send("offset must be a non-negative value");
+    }
+
+    let limit : number;
+    if (!req.query.limit)
+        limit = 20;
+    else
+    {
+        limit = parseInt(<string>req.query.limit);
+        if(isNaN(limit) || limit < 0)
+            return res.status(400).send("limit must be a non-negative value");
+    }
+
+    if(limit > 100)
+        return res.status(413).send("Page size too big");
+
+    const result = await new ImageContoller().get(offset, limit);
     return res.status(200).json(result);
 });

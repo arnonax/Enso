@@ -73,6 +73,47 @@ describe("image integration test", function () {
         expect(result).to.eql(imageData);
     });
 
+    it("should get all images when limit > # of items", async() => {
+        const images : Image[] = [
+            {...dummyImage(), ...{id: "123", name: "A"}},
+            {...dummyImage(), ...{id: "124", name: "B"}},
+            {...dummyImage(), ...{id: "125", name: "C"}},
+        ];
+        await insertImages(images, sut);
+
+        const result = await sut.get(0, 5);
+        expect(result.length).to.eq(3);
+        expect(result).to.eql(images);
+    });
+
+    it("should limit images according to parameter", async() => {
+        const images : Image[] = [
+            {...dummyImage(), ...{id: "123", name: "A"}},
+            {...dummyImage(), ...{id: "124", name: "B"}},
+            {...dummyImage(), ...{id: "125", name: "C"}},
+        ];
+        await insertImages(images, sut);
+
+        const result = await sut.get(0, 2);
+        expect(result.length).to.eq(2);
+        const expectedResult = [images[0], images[1]];
+        expect(result).to.eql(expectedResult);
+    });
+
+    it("should skip images according to parameter", async() => {
+        const images : Image[] = [
+            {...dummyImage(), ...{id: "123", name: "A"}},
+            {...dummyImage(), ...{id: "124", name: "B"}},
+            {...dummyImage(), ...{id: "125", name: "C"}},
+        ];
+        await insertImages(images, sut);
+
+        const result = await sut.get(2, 2);
+        expect(result.length).to.eq(1);
+        const expectedResult = [images[2]];
+        expect(result).to.eql(expectedResult);
+    });
+
     function dummyImage() : Image {
         return {
             id: "1234",
@@ -81,4 +122,10 @@ describe("image integration test", function () {
             version: "dummy version"
         };
     }        
+
+    async function insertImages(images: Image[], sut: ImageContoller) {
+        for (const image of images) {
+            await sut.upsert(image);
+        }
+    }    
 });
