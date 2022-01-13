@@ -87,7 +87,7 @@ describe("image integration test", function () {
     });
 
     it("should limit images according to parameter", async() => {
-        const images : Image[] = [
+        const images = [
             {...dummyImage(), ...{id: "123", name: "A"}},
             {...dummyImage(), ...{id: "124", name: "B"}},
             {...dummyImage(), ...{id: "125", name: "C"}},
@@ -101,7 +101,7 @@ describe("image integration test", function () {
     });
 
     it("should skip images according to parameter", async() => {
-        const images : Image[] = [
+        const images = [
             {...dummyImage(), ...{id: "123", name: "A"}},
             {...dummyImage(), ...{id: "124", name: "B"}},
             {...dummyImage(), ...{id: "125", name: "C"}},
@@ -114,6 +114,59 @@ describe("image integration test", function () {
         expect(result).to.eql(expectedResult);
     });
 
+    it("should return no combinations if length is less than the number of images", async() => {
+        const image = dummyImage();
+        await sut.upsert(image);
+        const result = await sut.getCombinations(2);
+        expect(result).to.eql([]);
+    });
+
+    it("should return the list of images if number equals number of images", async() => {
+        const image = dummyImage();
+        await sut.upsert(image);
+        
+        const result = await sut.getCombinations(1);
+        expect(result).to.eql([[image]]);
+    });
+
+    it("should return a list with one empty combination if length == 0", async() => {
+        const image = dummyImage();
+        await sut.upsert(image);
+        const result = await sut.getCombinations(0);
+        expect(result).to.eql([[]]);
+    });
+
+    it("should return array of singletons if number is 1", async() => {
+        const images = [
+            {...dummyImage(), ...{id: "123", name: "A"}},
+            {...dummyImage(), ...{id: "124", name: "B"}},
+        ];
+        await insertImages(images, sut);
+        
+        const result = await sut.getCombinations(1);
+        expect(result).to.eql([[images[0]], [images[1]]]);
+    });
+
+    it("should provide all combinations", async() => {
+        const images  = [
+            {...dummyImage(), ...{id: "123", name: "A"}},
+            {...dummyImage(), ...{id: "124", name: "B"}},
+            {...dummyImage(), ...{id: "125", name: "C"}},
+            {...dummyImage(), ...{id: "126", name: "D"}},
+        ];
+        await insertImages(images, sut);
+
+        const result = await sut.getCombinations(2);
+        
+        const expectedResult = [
+            [images[0], images[1]], 
+            [images[0], images[2]],
+            [images[0], images[3]],
+            [images[1], images[2]],
+            [images[1], images[3]],
+            [images[2], images[3]]];
+        expect(result).to.eql(expectedResult);
+    });
     function dummyImage() : Image {
         return {
             id: "1234",

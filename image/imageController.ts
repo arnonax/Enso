@@ -32,6 +32,32 @@ export class ImageContoller {
         return ImageContoller.removeMongoMembers(result);
     }
 
+    @Get("combinations")
+    public async getCombinations(length: number) : Promise<Image[][]> {
+        const allImages = (await imageModel.find())
+            .map(result => ImageContoller.removeMongoMembers(result));
+
+        return this.getCombinationsRecursive(allImages, length);
+    }
+
+    private getCombinationsRecursive(images: Image[], length: number) : Image[][] {
+        if (length > images.length)
+             return [];
+
+        if (length == 1)
+             return images.map(image => [image]);
+        
+        if (length == 0)
+            return [[]];
+        
+        const rest = images.slice(1);
+        
+        const restCombinations = this.getCombinationsRecursive(rest, length - 1);
+        const combinationsIncluding1stElement = restCombinations.map(combination => [images[0], ...combination]);
+        const combinationsExcluding1stElement = this.getCombinationsRecursive(rest, length);
+        return combinationsIncluding1stElement.concat(combinationsExcluding1stElement);
+    }
+
     private static removeMongoMembers(mongoObject: any) : Image {
         const obj = mongoObject.toObject();
         delete obj["__v"];
