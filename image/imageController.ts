@@ -1,26 +1,32 @@
-import { Route, Get, Put } from "tsoa";
+import { Route, Get, Put, Query, Body } from "tsoa";
 import { Image, imageModel } from "../model/image";
 import { app } from "../app";
 import { verifyToken } from "../authentication/auth";
 
+// TODO: find a way to remove the duplication between the way the routes are defined using the `app` functions
+// below, and the annotations on ImageController.
+
 @Route("image")
 export class ImageContoller {
     
-    @Get()
+    @Get("{id}")
     public async getById(id: string) : Promise<Image> {
         const result = await imageModel.findOne({id});
         return ImageContoller.removeMongoMembers(result);
     }
 
     @Get()
-    public async get(offset : number, limit : number) : Promise<Image[]> {
+    public async get(
+        @Query() offset : number, @
+        Query() limit : number
+    ) : Promise<Image[]> {
         const queryOptions = { skip: offset, limit };
         const results = await imageModel.find(null, null, queryOptions);
         return results.map(result => ImageContoller.removeMongoMembers(result));
     }
 
     @Put()
-    public async upsert(image: Image) : Promise<Image> {
+    public async upsert(@Body() image: Image) : Promise<Image> {
         const creteria = { id: image.id };
         const body = {...image, $set: {}};
         body.metadata = undefined;
@@ -33,7 +39,7 @@ export class ImageContoller {
     }
 
     @Get("combinations")
-    public async getCombinations(length: number) : Promise<Image[][]> {
+    public async getCombinations(@Query() length: number) : Promise<Image[][]> {
         const allImages = (await imageModel.find())
             .map(result => ImageContoller.removeMongoMembers(result));
 
@@ -84,6 +90,18 @@ app.put("/image", verifyToken, async (req, res) => {
     }
 });
 
+app.get("/image/combinations", verifyToken, async(req, res) => {
+
+    const length = parseInt(<string>req.query.length);
+    if(isNaN(length) || length < 0 || !Number.isInteger(length))
+        return res.status(400).send("'length' must be a non-negative integer");
+    
+    const controller = new ImageContoller();
+    const result = await controller.getCombinations(length);
+    
+    return res.status(200).json(result);
+});
+
 app.get("/image/:id", verifyToken, async (req, res) => {
     const id = req.params.id;
     const result = await new ImageContoller().getById(id);
@@ -94,15 +112,15 @@ app.get("/image/:id", verifyToken, async (req, res) => {
 });
 
 app.get("/image", verifyToken, async (req, res) => {
-    // TODO: extract the validation logic into a separate class
+    // TODO: extract the validation logic into a separate class and add tests for it
     let offset : number;
     if (!req.query.offset)
         offset = 0;
     else
     {
         offset = parseInt(<string>req.query.offset);
-        if (isNaN(offset) || offset < 0)
-            return res.status(400).send("offset must be a non-negative value");
+        if (isNaN(offset) || offset < 0 || !Number.isInteger(offset))
+            return res.status(400).send("offset must be a non-negative integer");
     }
 
     let limit : number;
@@ -111,8 +129,8 @@ app.get("/image", verifyToken, async (req, res) => {
     else
     {
         limit = parseInt(<string>req.query.limit);
-        if(isNaN(limit) || limit < 0)
-            return res.status(400).send("limit must be a non-negative value");
+        if(isNaN(limit) || limit < 0 || !Number.isInteger(limit))
+            return res.status(400).send("limit must be a non-negative integer");
     }
 
     if(limit > 100)

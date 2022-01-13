@@ -73,6 +73,7 @@ describe("image integration test", function () {
         expect(result).to.eql(imageData);
     });
 
+    // TODO: extract the creation of multiple images to a function
     it("should get all images when limit > # of items", async() => {
         const images : Image[] = [
             {...dummyImage(), ...{id: "123", name: "A"}},
@@ -114,6 +115,7 @@ describe("image integration test", function () {
         expect(result).to.eql(expectedResult);
     });
 
+    // TODO: refactor combinations calculator into a separate class and simplify the tests to be unit-tests
     it("should return no combinations if length is less than the number of images", async() => {
         const image = dummyImage();
         await sut.upsert(image);
